@@ -23,6 +23,7 @@ case class NodeObject(id: Int, children: Int, props: Int, currentDepth: Int = 1,
       ))
     else List.empty
   def childrenCount: Int = children + childrenObjects.map(_.childrenCount).sum
+  
   def modify: NodeObject =
     NodeObject(id,
       children,

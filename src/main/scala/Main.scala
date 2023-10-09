@@ -23,7 +23,7 @@ object Main:
   val ipAddr: InetAddress = InetAddress.getLocalHost
   val hostName: String = ipAddr.getHostName
   val hostAddress: String = ipAddr.getHostAddress
-
+  
   def main(args: Array[String]): Unit =
     import scala.jdk.CollectionConverters.*
     val outGraphFileName = if args.isEmpty then NGSConstants.OUTPUTFILENAME else args(0).concat(NGSConstants.DEFOUTFILEEXT)

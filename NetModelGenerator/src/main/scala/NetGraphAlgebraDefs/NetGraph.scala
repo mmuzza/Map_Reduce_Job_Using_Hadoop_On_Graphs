@@ -213,5 +213,10 @@ object NetGraph:
         NetModelAlgebra(nodes, edges)
     }
   end load
+
+  def getNodeById(idToFind: Int, nodeSet: java.util.Set[NodeObject]): Option[NodeObject] = {
+    nodeSet.asScala.find(node => node.id == idToFind)
+  }
+  
 end NetGraph
 

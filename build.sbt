@@ -23,7 +23,8 @@ lazy val commonDependencies = Seq(
   "org.scalatestplus" %% "mockito-4-2" % "3.2.12.0-RC2" % Test,
   "com.typesafe" % "config" % typeSafeConfigVersion,
   "ch.qos.logback" % "logback-classic" % logbackVersion,
-  "net.bytebuddy" % "byte-buddy" % netBuddyVersion
+  "net.bytebuddy" % "byte-buddy" % netBuddyVersion,
+  "org.apache.hadoop" % "hadoop-client" % "3.3.6"
 )
 
 lazy val root = (project in file("."))
@@ -57,10 +58,10 @@ lazy val GenericSimUtilities = (project in file("GenericSimUtilities"))
 
 
 scalacOptions ++= Seq(
-      "-deprecation", // emit warning and location for usages of deprecated APIs
-      "--explain-types", // explain type errors in more detail
-      "-feature" // emit warning and location for usages of features that should be imported explicitly
-    )
+  "-deprecation", // emit warning and location for usages of deprecated APIs
+  "--explain-types", // explain type errors in more detail
+  "-feature" // emit warning and location for usages of features that should be imported explicitly
+)
 
 compileOrder := CompileOrder.JavaThenScala
 test / fork := true
@@ -68,11 +69,23 @@ run / fork := true
 run / javaOptions ++= Seq(
   "-Xms8G",
   "-Xmx100G",
+  "-XX:+UnlockExperimentalVMOptions", // Add this line
   "-XX:+UseG1GC"
 )
+// Exclude Logback
+//libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-logback")) }
 
-Compile / mainClass := Some("com.lsc.Main")
-run / mainClass := Some("com.lsc.Main")
+
+//run / javaOptions ++= Seq(
+//  "-Xms8G",
+//  "-Xmx100G",
+//  "-XX:+UseG1GC"
+//)
+
+//Compile / mainClass := Some("com.lsc.Main")
+//run / mainClass := Some("com.lsc.Main")
+Compile / mainClass := Some("com.lsc.SimRankMapReduce")
+run / mainClass := Some("com.lsc.SimRankMapReduce")
 
 val jarName = "netmodelsim.jar"
 assembly/assemblyJarName := jarName
