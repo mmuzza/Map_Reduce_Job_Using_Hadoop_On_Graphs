@@ -1,19 +1,21 @@
 package com.lsc
+import NetGraphAlgebraDefs.NetModelAlgebra.logger
 import org.apache.hadoop.conf.Configuration
 import org.apache.log4j.spi.LoggerFactory
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{DoubleWritable, IntWritable, LongWritable, Text}
 import org.apache.hadoop.mapred.{FileInputFormat, FileOutputFormat, JobClient, JobConf, TextInputFormat, TextOutputFormat}
 import org.apache.hadoop.mapreduce.{Job, Mapper, Reducer}
-import org.slf4j.LoggerFactory
 
 import java.text.DecimalFormat
 import scala.collection.JavaConverters.*
 
-object SimRankMapReduce {
+object nodesMapReduce {
 
-  //private val logger = LoggerFactory.getLogger(this.getClass)
-
+  // Sim Rank algorithm compares the Nodes properties of original with the perturbed
+  // All properties are used excluding the Node "ID"
+  // It then generates a score determining whether it was removed, modified, or added based on the threshold.
+  // The threshold for match is set to 0.9, anything above is modified, and below is considered removed
   def calculateSimRank(csvLine: String): Double = {
 
     println(csvLine)
@@ -135,6 +137,13 @@ object SimRankMapReduce {
   }
 
 
+  // This is the Mapper class which defines the map function inside of it
+  // It takes 4 things: KeyIn, valueIn, KeyOut, ValOut
+  // KeyIn and ValIn is used my the map function which it takes automatically line by line
+  // ValueIn is the line being read in the csv
+  // We manipulate the ValueIn and send it to simRank to calculate score
+  // Score received by the simRank is set to ValueOut for the reducer
+  // KeyOut is set to the original node which is index 0 of csv line (ValueIn)
   class MyMapper extends Mapper[LongWritable, Text, Text, DoubleWritable] { // KeyIn, ValIn, KeyOut, ValOut
 
     private val node = new Text() // Key out
@@ -163,9 +172,13 @@ object SimRankMapReduce {
         context.write(node, score)
       }
     }
-  }
+  } // end of mapper
 
-
+  // Reducer takes in 4 arguments
+  // First is the KeyIn and ValueIn it receives from the mapper
+  // KeyIn will be the original Node and ValueIn will be the simRank score
+  // In my code below reducer picks the score that all: meet threshold of 0.9, below and above
+  // It stores it in a big string with all the information and is set as the ValueOut
   class MyReducer extends Reducer[Text, DoubleWritable, Text, Text] {
     override def reduce(
                          key: Text,
@@ -174,15 +187,15 @@ object SimRankMapReduce {
                        ): Unit = {
 
 
-     // logger.info("Reduce Function is Being Executed")
+      logger.info("Reduce Function is Being Executed")
 
       val scores = values.asScala.map(_.get()) // Extract Double values
 
-      //logger.info("Calculating the Number of Nodes compared with Original Node exceeded the Threshold indicating Modification")
+      logger.info("Calculating the Number of Nodes compared with Original Node exceeded the Threshold indicating Modification")
       val greaterThanCount = scores.count(_ > 0.9)
-      //logger.info("Calculating If Any Score from SimRank Matched the 0.9 Threshold Indicating Node was Found")
+      logger.info("Calculating If Any Score from SimRank Matched the 0.9 Threshold Indicating Node was Found")
       val equalToCount = scores.count(_ == 0.9)
-      //logger.info("Calculating the Number of Nodes Compared with Original Node were under the Threshold indicating Removed")
+      logger.info("Calculating the Number of Nodes Compared with Original Node were under the Threshold indicating Removed")
       val lessThanCount = scores.count(_ < 0.9)
 
 
@@ -211,93 +224,55 @@ object SimRankMapReduce {
       }
 
 
-      //logger.info("Outputting Information to a Csv File")
+      logger.info("Outputting Information to a Csv File")
       val outputMessage = s"\n$info \nBTL: $btl \nGTL: $gtl \nRTL: $rtl \nCTL: $ctl \nWTL: $wtl \nDTL: $dtl \nATL: $atl\n\n"
 
-      //logger.info("Writing each unique key with its value to a csv file")
+      logger.info("Writing each unique key with its value to a csv file")
       context.write(key, new Text(outputMessage))
     }
-  }
+  } // end of reducer
 
 
 
   def main(args: Array[String]): Unit = {
 
-//    logger.info("Creating a Hadoop configuration")
+    logger.info("Creating a Hadoop configuration")
     val configuration = new Configuration()
 
-//    logger.info("Setting input and output paths (hard coding)")
+    logger.info("Setting input and output paths (hard coding)")
     val inputPath = new Path("/Users/muzza/desktop/CS440/shardedFiles/shard0.csv")
     val outputPath = new Path("/Users/muzza/desktop/CS440/reducer")
 
-//    logger.info("Create a Hadoop job instance with a name")
+    logger.info("Create a Hadoop job instance with a name")
     val job = Job.getInstance(configuration, "MyMapReduceJob")
 
-//    logger.info("Setting the JAR file containing the driver class")
+    logger.info("Setting the JAR file containing the driver class")
 //     job.setJarByClass(MyMapReduceApp.getClass)
 
-    //FileInputFormat.setInputPaths(job, inputPath)
-
-//    logger.info("Set Mapper and Reducer classes")
+    logger.info("Set Mapper and Reducer classes")
     job.setMapperClass(classOf[MyMapper])
     job.setReducerClass(classOf[MyReducer])
 
-//    logger.info("Set Mapper and Reducer output key-value types")
+    logger.info("Set Mapper and Reducer output key-value types")
     job.setMapOutputKeyClass(classOf[Text])
     job.setMapOutputValueClass(classOf[DoubleWritable])
     job.setOutputKeyClass(classOf[Text])
     job.setOutputValueClass(classOf[Text])
 
-//    logger.info("Set input and output paths")
+    logger.info("Set input and output paths")
     org.apache.hadoop.mapreduce.lib.input.FileInputFormat.addInputPath(job, inputPath)
     org.apache.hadoop.mapreduce.lib.output.FileOutputFormat.setOutputPath(job, outputPath)
 
-
-    /*
-    import java.text.SimpleDateFormat
-    import java.util.Date
-
-    val timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
-    val outputPath = new Path(s"/Users/muzza/desktop/CS440/output_$timestamp")
-    */
-
-
-//    logger.info("Submitting the job and waiting for completion")
-//    if (job.waitForCompletion(true)) {
-//      logger.info("Job completed successfully!")
-//      System.exit(1)
-//    } else {
-//      logger.info("Job failed!")
-//      System.exit(0)
-//    }
+    logger.info("Submitting the job and waiting for completion")
+    if (job.waitForCompletion(true)) {
+      logger.info("Job completed successfully!")
+      System.exit(1)
+    } else {
+      logger.info("Job failed!")
+      System.exit(0)
+    }
 
   }
-
-  /*
-
-
-//
-//  @main def runMapReduce(inputPath: String, outputPath: String) =
-//    val conf: JobConf = new JobConf(this.getClass)
-//    conf.setJobName("SimRankScore")
-//    conf.set("fs.defaultFS", "local")
-//    conf.set("mapreduce.job.maps", "1")
-//    conf.set("mapreduce.job.reduces", "1")
-//    conf.setOutputKeyClass(classOf[Text])
-//    conf.setOutputValueClass(classOf[IntWritable])
-////    conf.setMapperClass(classOf[Map])
-////    conf.setCombinerClass(classOf[Reduce])
-////    conf.setReducerClass(classOf[Reduce])
-//    conf.setInputFormat(classOf[TextInputFormat])
-//    conf.setOutputFormat(classOf[TextOutputFormat[Text, IntWritable]])
-//    FileInputFormat.setInputPaths(conf, new Path(inputPath))
-//    FileOutputFormat.setOutputPath(conf, new Path(outputPath))
-//    JobClient.runJob(conf)
-
-*/
-
-
-
-} // end of map reduce
+} // end of map reduce class
 
 

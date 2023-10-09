@@ -1,4 +1,4 @@
-/*
+
 package com.lsc
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -14,15 +14,25 @@ object edgesMapReduce {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
+  // Sim Rank algorithm compares the edges properties of original with the perturbed
+  // It first checks using the 8 properties excluding the ID to see if source node of both edges match
+  // If source node is equivalent and there is a match then it goes and looks and compared the V NOde properties
+  // V Node is the node it connects to at the opposite end (I noticed that when i printed the edge out)
+  // It the generates a score determining whether it was removed, modified, or added.
+  // Honestly this algorithm is complete trash, Struggled with understanding what was needed to be used
+  // Discovered the NetModelAnalyzer later on, believed we must use that but it was too late
+  // The score generated from this algorithm for edges is not accurate
   def simRank(csvLine: String): Double = {
 
-    println(csvLine)
+    logger.info("Calculating Score")
 
     var score: Double = 0.0
 
     // Split the CSV line by comma to extract fields
     val fields = csvLine.split(",")
 
+    logger.info("Checking to see If Source Node Matches")
+    
     // Children
     if (fields(1).trim.toDouble == fields(19).trim.toDouble ) {
       score += 0.1
@@ -116,7 +126,8 @@ object edgesMapReduce {
     // If source node matches then we check V Node to see if it has been modified
     if(df.format(score).toDouble == 0.9){
 
-      logger.info("Im inside" + fields(27))
+      logger.info("Source Node has a match")
+      logger.info("Checking V Node Properties of each edge")
 
       score = 0.0;
 
@@ -209,10 +220,18 @@ object edgesMapReduce {
       }
     }
 
+    logger.info("Score is Generated")
     score
   }
 
 
+  // This is the Mapper class which defines the map function inside of it
+  // It takes 4 things: KeyIn, valueIn, KeyOut, ValOut
+  // KeyIn and ValIn is used my the map function which it takes automatically line by line
+  // ValueIn is the line being read in the csv
+  // We manipulate the ValueIn and send it to simRank to calculate score
+  // Score received by the simRank is set to ValueOut for the reducer
+  // KeyOut is set to the original node which is index 0 of csv line (ValueIn)
   class MyMapper extends Mapper[LongWritable, Text, Text, DoubleWritable] { // KeyIn, ValIn, KeyOut, ValOut
 
     private val node = new Text() // Key out
@@ -243,9 +262,14 @@ object edgesMapReduce {
         context.write(node, score)
       }
     }
-  }
+  } // end of mapper
 
 
+  // Reducer takes in 4 arguments
+  // First is the KeyIn and ValueIn it receives from the mapper
+  // KeyIn will be the original Node and ValueIn will be the simRank score
+  // In my code below reducer picks the score that all: meet threshold of 0.9, below and above
+  // It stores it in a big string with all the information and is set as the ValueOut
   class MyReducer extends Reducer[Text, DoubleWritable, Text, Text] {
     override def reduce(
                          key: Text,
@@ -253,10 +277,6 @@ object edgesMapReduce {
                          context: Reducer[Text, DoubleWritable, Text, Text]#Context
                        ): Unit = {
 
-      // Write the header if this is the first record
-//      if (key.toString == "Edges Mapping,") {
-//        context.write(key, new Text("Info, BTL, GTL, RTL, CTL, WTL, DTL, ATL\n"))
-//      }
 
       logger.info("Reduce Function is Being Executed")
 
@@ -294,17 +314,13 @@ object edgesMapReduce {
         info = s"Removed in Perturbed Graph"
       }
 
-
       logger.info("Outputting Information to a Csv File")
-      //      val outputMessage = s"\n$info \nBTL: $btl \nGTL: $gtl \nRTL: $rtl \nCTL: $ctl \nWTL: $wtl \nDTL: $dtl \nATL: $atl\n\n"
       val outputMessage = s"$info, $btl, $gtl, $rtl, $ctl, $wtl, $dtl, $atl\n"
-
-      // Edges Mapping, Info, BTL, GTL, RTL, CTL, WTL, DTL, ATL
 
       logger.info("Writing each unique key with its value to a csv file")
       context.write(key, new Text(outputMessage))
     }
-  }
+  } // end of reducer
 
 
   def main(args: Array[String]): Unit = {
@@ -320,10 +336,8 @@ object edgesMapReduce {
     logger.info("Create a Hadoop job instance with a name")
     val job = Job.getInstance(configuration, "MyMapReduceJob")
 
-    //    logger.info("Setting the JAR file containing the driver class")
+    logger.info("Setting the JAR file containing the driver class")
     //     job.setJarByClass(MyMapReduceApp.getClass)
-
-    //FileInputFormat.setInputPaths(job, inputPath)
 
     logger.info("Set Mapper and Reducer classes")
     job.setMapperClass(classOf[MyMapper])
@@ -339,15 +353,6 @@ object edgesMapReduce {
     org.apache.hadoop.mapreduce.lib.input.FileInputFormat.addInputPath(job, inputPath)
     org.apache.hadoop.mapreduce.lib.output.FileOutputFormat.setOutputPath(job, outputPath)
 
-
-    /*
-    import java.text.SimpleDateFormat
-    import java.util.Date
-
-    val timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
-    val outputPath = new Path(s"/Users/muzza/desktop/CS440/output_$timestamp")
-    */
-
     logger.info("Submitting the job and waiting for completion")
     if (job.waitForCompletion(true)) {
       logger.info("Job completed successfully!")
@@ -358,7 +363,4 @@ object edgesMapReduce {
     }
   }
 
-}// end of map reduce
-
-
- */
+}// end of map reduce class

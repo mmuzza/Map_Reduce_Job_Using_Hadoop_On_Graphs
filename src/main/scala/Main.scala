@@ -78,6 +78,15 @@ object Main:
           logger.info(s"Diff yaml file ${outputDirectory.concat(outGraphFileName.concat(".yaml"))} contains the delta between the original and the perturbed graphs.")
           logger.info(s"Done! Please check the content of the output directory $outputDirectory")
 
+    //-----------------------------------------------------------------------------------------------------------------
+
+    // Below is my code edited in professor's main class
+    // Inside of application.conf we have saved many directories
+    // Here we call them sand store them accordingly
+    // We created an instance of sharding class
+    // USing that sharding class, we call the function callToExecute
+    // That function takes an array of strings in which we pass our arguments
+    // Those are arguments are used in
 
     logger.info("Setting Arguments for sharding and map reducers to execute")
     val config: Config = ConfigFactory.load()
@@ -95,7 +104,7 @@ object Main:
     val perturbedNgs = globalConfig.getString("perturbedNgs")
     val perturbedNgsDirectory = globalConfig.getString("perturbedNgsDirectory")
 
-
+    // We call the callToExecute function inside of sharding function and pass in all the arguments needed to shard successfully
     sharding.callToExecute(originalPerturbedNodes, inputToShardNodes, outputForShardedNodes, originalPerturbedEdges, inputToShardEdges, outputForShardedEdges, originalNgs, originalNgsDirectory, perturbedNgs, perturbedNgsDirectory)
 
 
