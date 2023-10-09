@@ -82,10 +82,10 @@ run / javaOptions ++= Seq(
 //  "-XX:+UseG1GC"
 //)
 
-//Compile / mainClass := Some("com.lsc.Main")
-//run / mainClass := Some("com.lsc.Main")
-Compile / mainClass := Some("com.lsc.SimRankMapReduce")
-run / mainClass := Some("com.lsc.SimRankMapReduce")
+Compile / mainClass := Some("com.lsc.Main")
+run / mainClass := Some("com.lsc.Main")
+//Compile / mainClass := Some("com.lsc.SimRankMapReduce")
+//run / mainClass := Some("com.lsc.SimRankMapReduce")
 
 val jarName = "netmodelsim.jar"
 assembly/assemblyJarName := jarName

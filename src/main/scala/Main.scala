@@ -11,12 +11,16 @@ import com.google.common.graph.ValueGraph
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import guru.nidi.graphviz.engine.Format
 import org.slf4j.Logger
 
 import java.net.{InetAddress, NetworkInterface, Socket}
 import scala.util.{Failure, Success}
+
+import sharding.callToExecute
+
+import Utilz.NGSConstants.{CONFIGENTRYNAME, obtainConfigModule}
 
 object Main:
   val logger:Logger = CreateLogger(classOf[Main.type])
@@ -73,3 +77,26 @@ object Main:
         case Right(value) =>
           logger.info(s"Diff yaml file ${outputDirectory.concat(outGraphFileName.concat(".yaml"))} contains the delta between the original and the perturbed graphs.")
           logger.info(s"Done! Please check the content of the output directory $outputDirectory")
+
+
+    logger.info("Setting Arguments for sharding and map reducers to execute")
+    val config: Config = ConfigFactory.load()
+    val globalConfig: Config = obtainConfigModule(config, CONFIGENTRYNAME)
+
+    val originalPerturbedNodes = globalConfig.getString("originalPerturbedNodes")
+    val inputToShardNodes = globalConfig.getString("inputToShardNodes")
+    val outputForShardedNodes = globalConfig.getString("outputForShardedNodes")
+    val originalPerturbedEdges = globalConfig.getString("originalPerturbedEdges")
+    val inputToShardEdges = globalConfig.getString("inputToShardEdges")
+    val outputForShardedEdges = globalConfig.getString("outputForShardedEdges")
+
+    val originalNgs = globalConfig.getString("originalNgs")
+    val originalNgsDirectory = globalConfig.getString("originalNgsDirectory")
+    val perturbedNgs = globalConfig.getString("perturbedNgs")
+    val perturbedNgsDirectory = globalConfig.getString("perturbedNgsDirectory")
+
+
+    sharding.callToExecute(originalPerturbedNodes, inputToShardNodes, outputForShardedNodes, originalPerturbedEdges, inputToShardEdges, outputForShardedEdges, originalNgs, originalNgsDirectory, perturbedNgs, perturbedNgsDirectory)
+
+
+

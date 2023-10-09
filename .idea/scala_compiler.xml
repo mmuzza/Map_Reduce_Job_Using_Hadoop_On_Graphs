@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="incrementalityType" value="IDEA" />
-    <profile name="sbt 1" modules="GenericSimUtilities,NetModelGenerator,netgamesim_7377" />
+    <profile name="sbt 1" modules="GenericSimUtilities,NetModelGenerator,netgamesim_8976" />
     <profile name="sbt 2" modules="NetGameSim">
       <option name="compileOrder" value="JavaThenScala" />
       <option name="deprecationWarnings" value="true" />

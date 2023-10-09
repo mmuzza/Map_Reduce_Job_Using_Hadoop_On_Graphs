@@ -7,7 +7,7 @@ import NetModelAnalyzer.Analyzer
 import Randomizer.SupplierOfRandomness
 import Utilz.{CreateLogger, NGSConstants}
 import com.google.common.graph.{EndpointPair, ValueGraph}
-import com.lsc.sharding.{originalGraphEdges, originalGraphNodes, perturbedGraphEdges, perturbedGraphNodes, shardGraphsForNode, writeEdgesCsvFile, writeNodesCsvFile}
+//import com.lsc.sharding.{originalGraphEdges, originalGraphNodes, perturbedGraphEdges, perturbedGraphNodes, shardGraphsForNode, writeEdgesCsvFile, writeNodesCsvFile}
 
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import scala.concurrent.duration.*
@@ -19,6 +19,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import java.io.{BufferedReader, BufferedWriter, File, FileReader, FileWriter, PrintWriter}
 import java.net.{InetAddress, NetworkInterface, Socket}
 import java.text.DecimalFormat
+import scala.collection.mutable.CollisionProofHashMap.Node
 import scala.collection.parallel.ParSeq
 import scala.util.{Failure, Success}
 import scala.jdk.CollectionConverters.*
@@ -29,24 +30,21 @@ object sharding {
 
   val logger = LoggerFactory.getLogger(this.getClass)
 
-  // --------------------------------------------------------------------------
-
-  logger.info("Loading in original graph ngs and perturbed graph ngs files using NetGraph.load function:")
-  val originalGraph: Option[NetGraph] = NetGraph.load("NetGameSimhomework.ngs", "/Users/muzza/desktop/CS440/")
-  val perturbedGraph: Option[NetGraph] = NetGraph.load("NetGameSimhomework.ngs.perturbed", "/Users/muzza/desktop/CS440/")
-
-
-  logger.info("Gathering information of the graphs")
-  val netOriginalGraph: NetGraph = originalGraph.get // getiting original graph info
-  val netPerturbedGraph: NetGraph = perturbedGraph.get // getiting perturbed graph info
-
-  logger.info("Storing nodes for in a list for original graph")
-  val originalGraphNodes: java.util.Set[NodeObject] = netOriginalGraph.sm.nodes()
-  val originalNodeList = originalGraphNodes.asScala.toList
-
-  logger.info("Storing nodes for in a list for perturbed graph")
-  val perturbedGraphNodes: java.util.Set[NodeObject] = netPerturbedGraph.sm.nodes()
-  val perturbedNodeList = perturbedGraphNodes.asScala.toList
+//  logger.info("Loading in original graph ngs and perturbed graph ngs files using NetGraph.load function:")
+//  val originalGraph: Option[NetGraph] = NetGraph.load("NetGameSimhomework.ngs", "/Users/muzza/desktop/CS440/")
+//  val perturbedGraph: Option[NetGraph] = NetGraph.load("NetGameSimhomework.ngs.perturbed", "/Users/muzza/desktop/CS440/")
+//
+//  logger.info("Gathering information of the graphs")
+//  val netOriginalGraph: NetGraph = originalGraph.get // getiting original graph info
+//  val netPerturbedGraph: NetGraph = perturbedGraph.get // getiting perturbed graph info
+//
+//  logger.info("Storing nodes for in a list for original graph")
+//  val originalGraphNodes: java.util.Set[NodeObject] = netOriginalGraph.sm.nodes()
+//  val originalNodeList = originalGraphNodes.asScala.toList
+//
+//  logger.info("Storing nodes for in a list for perturbed graph")
+//  val perturbedGraphNodes: java.util.Set[NodeObject] = netPerturbedGraph.sm.nodes()
+//  val perturbedNodeList = perturbedGraphNodes.asScala.toList
 
 
   // -------------------------------------------------------------------------
@@ -54,7 +52,10 @@ object sharding {
   // MAKING CSV FILES WITH ALL POSSIBLE COMBINATIONS Of NODES
 
   def writeNodesCsvFile(filePath: String, originalNodes: java.util.Set[NodeObject], perturbedNodes: java.util.Set[NodeObject]): Unit = {
+
     val writer = new BufferedWriter(new FileWriter(filePath))
+    val originalNodeList = originalNodes.asScala.toList
+    val perturbedNodeList = perturbedNodes.asScala.toList
 
     // Write the CSV header
     writer.write("originalId,originalChildren,originalProps,originalCurrentDepth,originalPropValueRange," +
@@ -151,11 +152,11 @@ object sharding {
   // --------------------------------------------------------------------------
 
 
-  logger.info("Storing The Edges in a list for both Original Graph and the Perturbed Graph")
-  val originalGraphEdges: java.util.Set[EndpointPair[NodeObject]] = netOriginalGraph.sm.edges()
-  val originalEdgeList = originalGraphEdges.asScala.toList
-  val perturbedGraphEdges: java.util.Set[EndpointPair[NodeObject]] = netPerturbedGraph.sm.edges()
-  val perturbedEdgeList = perturbedGraphEdges.asScala.toList
+//  logger.info("Storing The Edges in a list for both Original Graph and the Perturbed Graph")
+//  val originalGraphEdges: java.util.Set[EndpointPair[NodeObject]] = netOriginalGraph.sm.edges()
+//  val originalEdgeList = originalGraphEdges.asScala.toList
+//  val perturbedGraphEdges: java.util.Set[EndpointPair[NodeObject]] = netPerturbedGraph.sm.edges()
+//  val perturbedEdgeList = perturbedGraphEdges.asScala.toList
 
 
 
@@ -200,8 +201,52 @@ object sharding {
   }
 
 
+  def callToExecute(args: String*): Unit = {
+
+    logger.info("Loading in original graph ngs and perturbed graph ngs files using NetGraph.load function:")
+    val originalGraph: Option[NetGraph] = NetGraph.load({args(6)}, {args(7)})
+    val perturbedGraph: Option[NetGraph] = NetGraph.load({args(8)}, {args(9)})
+
+    logger.info("Gathering information of the graphs")
+    val netOriginalGraph: NetGraph = originalGraph.get // getiting original graph info
+    val netPerturbedGraph: NetGraph = perturbedGraph.get // getiting perturbed graph info
+
+    logger.info("Storing nodes for in a list for original graph")
+    val originalGraphNodes: java.util.Set[NodeObject] = netOriginalGraph.sm.nodes()
+    //val originalNodeList = originalGraphNodes.asScala.toList
+
+    logger.info("Storing nodes for in a list for perturbed graph")
+    val perturbedGraphNodes: java.util.Set[NodeObject] = netPerturbedGraph.sm.nodes()
+    //val perturbedNodeList = perturbedGraphNodes.asScala.toList
+
+
+    logger.info("Storing The Edges in a list for both Original Graph and the Perturbed Graph")
+    val originalGraphEdges: java.util.Set[EndpointPair[NodeObject]] = netOriginalGraph.sm.edges()
+    val originalEdgeList = originalGraphEdges.asScala.toList
+    val perturbedGraphEdges: java.util.Set[EndpointPair[NodeObject]] = netPerturbedGraph.sm.edges()
+    val perturbedEdgeList = perturbedGraphEdges.asScala.toList
+
+
+
+    logger.info("Creating a CSV file with combination of each node of original with all nodes in perturbed")
+    // Args 0 represents the file path to creating csv with combination of O x P graph nodes
+    writeNodesCsvFile({args(0)}, originalGraphNodes, perturbedGraphNodes)
+
+    logger.info("Creating a CSV file with combination of each edge of original with all edges in perturbed")
+    // Args 0 represents the file path to creating csv with combination of O x P graph edges
+    writeEdgesCsvFile({args(3)}, originalGraphEdges, perturbedGraphEdges)
+
+    logger.info("Sharding the Nodes CSV files into 10's")
+    shardGraphsForNode({args(1)}, {args(2)}, 10)
+
+    logger.info("Sharding the Edges CSV files into 10's")
+    shardGraphsForNode({args(4)}, {args(5)}, 10)
+
+  }
+
 }
 
+/*
 object file {
   def main(args: Array[String]): Unit = {
 
@@ -227,5 +272,5 @@ object file {
     shardGraphsForNode(inputToShardEdges, outputForShardedEdges, 10)
   }
 }
-
+*/
 
