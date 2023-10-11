@@ -233,22 +233,20 @@ object nodesMapReduce {
   } // end of reducer
 
 
-  def main(args: Array[String]): Unit = {
+  def executeMapReduceJobForNodes(args: String*): Unit = {
 
     logger.info("Creating a Hadoop configuration")
     val configuration = new Configuration()
 
     logger.info("Setting input and output paths (hard coding)")
-    //val inputPath = new Path("/Users/muzza/desktop/CS440/shardedFiles/shard0.csv")
-//    val outputPath = new Path("/Users/muzza/desktop/CS440/reducer")
-    val inputPath = new Path("/Users/muzza/desktop/CS440/originalXperturbed/combinations.csv")
-    val outputPath = new Path("/Users/muzza/desktop/CS440/outout")
+    val inputPath = new Path({args(0)})
+    val outputPath = new Path({args(1)})
 
     logger.info("Create a Hadoop job instance with a name")
     val job = Job.getInstance(configuration, "MyMapReduceJob")
 
     logger.info("Setting the JAR file containing the driver class")
-//     job.setJarByClass(MyMapReduceApp.getClass)
+    //     job.setJarByClass(MyMapReduceApp.getClass)
 
     logger.info("Set Mapper and Reducer classes")
     job.setMapperClass(classOf[MyMapper])
@@ -267,13 +265,14 @@ object nodesMapReduce {
     logger.info("Submitting the job and waiting for completion")
     if (job.waitForCompletion(true)) {
       logger.info("Job completed successfully!")
-      System.exit(1)
+      //System.exit(1)
     } else {
       logger.info("Job failed!")
       System.exit(0)
     }
   }
-
+  
+  
 } // end of map reduce class
 
 

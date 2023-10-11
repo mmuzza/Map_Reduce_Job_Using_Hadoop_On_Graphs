@@ -19,6 +19,8 @@ import java.net.{InetAddress, NetworkInterface, Socket}
 import scala.util.{Failure, Success}
 
 import sharding.callToExecute
+import nodesMapReduce.executeMapReduceJobForNodes
+
 
 import Utilz.NGSConstants.{CONFIGENTRYNAME, obtainConfigModule}
 
@@ -104,8 +106,18 @@ object Main:
     val perturbedNgs = globalConfig.getString("perturbedNgs")
     val perturbedNgsDirectory = globalConfig.getString("perturbedNgsDirectory")
 
+    val nodesMapReduceInputPath = globalConfig.getString("nodesMapReduceInputPath")
+    val nodesMapReduceOutputPath = globalConfig.getString("nodesMapReduceOutputPath")
+
+    val edgesMapReduceInputPath = globalConfig.getString("edgesMapReduceInputPath")
+    val edgesMapReduceOutputPath = globalConfig.getString("edgesMapReduceOutputPath")
+
     // We call the callToExecute function inside of sharding function and pass in all the arguments needed to shard successfully
     sharding.callToExecute(originalPerturbedNodes, inputToShardNodes, outputForShardedNodes, originalPerturbedEdges, inputToShardEdges, outputForShardedEdges, originalNgs, originalNgsDirectory, perturbedNgs, perturbedNgsDirectory)
+
+    // We call the map reducer function to run on the nodes
+    nodesMapReduce.executeMapReduceJobForNodes(nodesMapReduceInputPath, nodesMapReduceOutputPath)
+
 
 
 

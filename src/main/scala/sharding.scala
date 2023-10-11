@@ -20,6 +20,7 @@ import scala.collection.parallel.ParSeq
 import scala.util.{Failure, Success}
 import scala.jdk.CollectionConverters.*
 import scala.io.Source
+import nodesMapReduce.executeMapReduceJobForNodes
 
 object sharding {
 
@@ -211,6 +212,10 @@ object sharding {
     shardGraphsForNode({args(4)}, {args(5)}, 10)
 
     logger.info("Sharding has completed successfully")
+
+//    logger.info("Map Reduce is running on the Nodes for sharded files")
+//    nodesMapReduce.executeMapReduceJobForNodes({args(10)}, {args(11)})
+
   }
 
 }

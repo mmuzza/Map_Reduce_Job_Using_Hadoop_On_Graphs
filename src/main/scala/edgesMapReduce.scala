@@ -32,7 +32,7 @@ object edgesMapReduce {
     val fields = csvLine.split(",")
 
     logger.info("Checking to see If Source Node Matches")
-    
+
     // Children
     if (fields(1).trim.toDouble == fields(19).trim.toDouble ) {
       score += 0.1
@@ -235,7 +235,7 @@ object edgesMapReduce {
   class MyMapper extends Mapper[LongWritable, Text, Text, DoubleWritable] { // KeyIn, ValIn, KeyOut, ValOut
 
     private val node = new Text() // Key out
-    private val header = new Text()
+    //private val header = new Text()
     private val score = new DoubleWritable // Value out
 
     override def map(
@@ -329,9 +329,9 @@ object edgesMapReduce {
     val configuration = new Configuration()
 
     logger.info("Setting input and output paths (hard coding)")
-//    val inputPath = new Path("/Users/muzza/desktop/CS440/shardedFileEdges/shard25177.csv")
+
     val inputPath = new Path("/Users/muzza/desktop/CS440/originalPerturbedEdges/combinedEdges.csv")
-    val outputPath = new Path("/Users/muzza/desktop/CS440/reducerForEdges")
+    val outputPath = new Path("/Users/muzza/desktop/CS440/edgesResults")
 
     logger.info("Create a Hadoop job instance with a name")
     val job = Job.getInstance(configuration, "MyMapReduceJob")
