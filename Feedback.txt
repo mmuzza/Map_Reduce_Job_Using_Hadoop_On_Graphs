@@ -1,0 +1,8 @@
+Student - Muhammad Muzzammil
+
+=> No comparisions with the original Yaml file produced by NetGameSim, no Metrics for your algorithm, no video for your AWS deployment = -1%
+
+Great execution! Your code is clean and has good comments. It's evident that you understand map/reduce well, and are able to implement it successfully.
+Good Job!
+
+Grade = 14%
